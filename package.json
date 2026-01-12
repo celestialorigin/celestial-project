@@ -1,6 +1,20 @@
-"scripts": {
-  "dev": "astro dev",
-  "build": "astro build",
-  "preview": "astro preview",
-  "check": "astro check"
+{
+  "name": "celestial-project",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^5.16.6"
+  },
+  "devDependencies": {
+    "@astrojs/node": "^9.5.1",
+    "rss-parser": "^3.13.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0"
+  }
 }
