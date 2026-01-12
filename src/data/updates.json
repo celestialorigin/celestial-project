@@ -1,11 +1,11 @@
 [
-    {
-        "id": "ST-20260106-001",
-        "category": "SONIC",
-        "date": "2026-01-06",
-        "title": "Star Echo Refrain",
-        "url": "https://www.youtube.com/watch?v=sample_video",
-        "message": "音響信号を受信。同期を開始。",
-        "source": "youtube"
-    }
+  {
+    "id": "ST-20260106-001",
+    "category": "SONIC",
+    "date": "2026-01-06",
+    "title": "Star Echo Refrain",
+    "url": "https://www.youtube.com/watch?v=sample_video",
+    "message": "音響信号を受信。同期を開始。",
+    "source": "youtube"
+  }
 ]
