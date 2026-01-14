@@ -2,6 +2,9 @@
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
 
+const BASE = import.meta.env.BASE_URL;
+const now = new Date();
+
 export async function getStaticPaths() {
   const entries = await getCollection("dialogues");
   return entries.map((entry) => ({
@@ -11,20 +14,65 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+
+const isFuture = !!(entry.data.publishAt && entry.data.publishAt > now);
+const { Content } = isFuture ? { Content: null } : await entry.render();
+
+// SEO / OGP 用の値（未来ログは出さない）
+const pageTitle = isFuture ? "CELESTIAL | UNOBSERVED" : `CELESTIAL | ${entry.data.title}`;
+const pageDesc =
+  !isFuture && entry.data.description ? String(entry.data.description) : null;
+
+// ※ canonical は BASE_URL 配下でも崩れないように BASE を使う
+const canonicalUrl = !isFuture
+  ? new URL(`${BASE}dialogues/${entry.slug}/`, Astro.site ?? "http://localhost").toString()
+  : null;
 ---
 
 <Layout showStars={true} starPattern="home" bodyClass="page-dialogue-single">
+  <Fragment slot="head">
+    <title>{pageTitle}</title>
+
+    {isFuture ? (
+      <meta name="robots" content="noindex, nofollow" />
+    ) : (
+      <>
+        {pageDesc && <meta name="description" content={pageDesc} />}
+        {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+        {/* OGP（未来ログは出さない） */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={pageTitle} />
+        {pageDesc && <meta property="og:description" content={pageDesc} />}
+        {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      </>
+    )}
+  </Fragment>
+
   <article class="container page fade-in-section">
-    <a href="/dialogues/">← DIALOGUES</a>
+    <a href={`${BASE}dialogues/`}>← DIALOGUES</a>
 
-    <h1>{entry.data.title}</h1>
-    <p style="opacity:0.7;">
-      {entry.data.publishAt.toLocaleString("ja-JP")}
-    </p>
+    {isFuture ? (
+      <section class="content">
+        <h1 style="opacity:0.85;">UNOBSERVED</h1>
+        <p style="opacity:0.7; margin-top:0.75rem;">
+          このログは、まだ観測可能ではありません。
+        </p>
+        <p style="opacity:0.4; font-size:0.9rem; margin-top:1.25rem;">
+          Scheduled: {entry.data.publishAt.toLocaleString("ja-JP")}
+        </p>
+      </section>
+    ) : (
+      <>
+        <h1>{entry.data.title}</h1>
+        <p style="opacity:0.7;">
+          {entry.data.publishAt.toLocaleString("ja-JP")}
+        </p>
 
-    <section class="content">
-      <Content />
-    </section>
+        <section class="content">
+          <Content />
+        </section>
+      </>
+    )}
   </article>
 </Layout>
