@@ -64,7 +64,28 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # ===== SUCCESS NOTIFY =====
+      - name: Notify Discord (Success)
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d "{\"username\":\"CELESTIAL SYSTEM\",\"content\":\"✅ **DEPLOY SUCCESS**\n🌌 CELESTIAL has been updated.\n🕒 $(date -u)\"}" \
+          $DISCORD_WEBHOOK
+
+      # ===== FAILURE NOTIFY =====
+      - name: Notify Discord (Failure)
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d "{\"username\":\"CELESTIAL SYSTEM\",\"content\":\"❌ **DEPLOY FAILED**\n⚠️ Build or deploy error occurred.\n🕒 $(date -u)\"}" \
+          $DISCORD_WEBHOOK
