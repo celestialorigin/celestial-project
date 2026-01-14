@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "new:dialogue": "node ./scripts/new-dialogue.mjs"
   },
   "dependencies": {
     "astro": "^5.16.6"
