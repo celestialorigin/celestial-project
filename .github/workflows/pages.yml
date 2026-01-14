@@ -2,8 +2,21 @@ name: Deploy to GitHub Pages (Scheduled)
 
 on:
   workflow_dispatch:
+
+  # 「サイトに影響する変更」だけでpushトリガー
   push:
     branches: ["main"]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "astro.config.*"
+      - "package.json"
+      - "package-lock.json"
+      - "pnpm-lock.yaml"
+      - "yarn.lock"
+      - ".github/workflows/pages.yml"
+
+  # publishAt 到来を拾うための定期デプロイ（毎時）
   schedule:
     - cron: "0 * * * *"
 
@@ -23,6 +36,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Pages 推奨: ビルド/デプロイ環境をセット
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
