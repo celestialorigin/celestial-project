@@ -29,12 +29,53 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
+env:
+  CORE_REPO: "celestialorigin/celestial-core"
+  CORE_REF: "main"
+  NODE_VERSION: "20"
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (legacy site)
         uses: actions/checkout@v4
+
+      # ★ 追加: core を別パスにcheckout
+      - name: Checkout core
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CORE_REPO }}
+          ref: ${{ env.CORE_REF }}
+          path: _core
+          # coreがprivateなら下を有効化（後述）
+          # token: ${{ secrets.CORE_REPO_TOKEN }}
+
+      # ★ 追加: coreのcontentをlegacyへ同期（ビルド前）
+      - name: Sync core content into legacy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "== Sync core/src/content -> legacy/src/content =="
+
+          mkdir -p src/content/dialogues src/content/activities
+
+          # ゴミ残り防止：完全同期（必要ならここを“差分同期”に変えてもOK）
+          rm -rf src/content/dialogues/*
+          rm -rf src/content/activities/*
+
+          if [ -d "_core/src/content/dialogues" ]; then
+            cp -a _core/src/content/dialogues/. src/content/dialogues/
+          fi
+
+          if [ -d "_core/src/content/activities" ]; then
+            cp -a _core/src/content/activities/. src/content/activities/
+          fi
+
+          echo "Synced counts:"
+          echo "dialogues: $(find src/content/dialogues -type f | wc -l)"
+          echo "activities: $(find src/content/activities -type f | wc -l)"
 
       # Pages 推奨: ビルド/デプロイ環境をセット
       - name: Setup Pages
@@ -43,7 +84,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
 
