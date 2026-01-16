@@ -93,6 +93,17 @@ jobs:
 
       - name: Build
         run: npm run build
+        
+      - name: Debug built HTML (base check)
+        run: |
+          echo "=== astro.config ==="
+          ls -la astro.config.*
+          echo "=== grep celestial-project in repo ==="
+          grep -R "celestial-project" -n . || true
+          echo "=== dist head (deep-observation) ==="
+          sed -n '1,40p' dist/deep-observation/index.html || true
+          echo "=== dist head (top) ==="
+          sed -n '1,40p' dist/index.html || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
