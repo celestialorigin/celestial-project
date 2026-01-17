@@ -1,9 +1,8 @@
-name: Deploy to GitHub Pages (Scheduled)
+﻿name: Deploy to GitHub Pages (Scheduled)
 
 on:
   workflow_dispatch:
 
-  # 「サイトに影響する変更」だけでpushトリガー
   push:
     branches: ["main"]
     paths:
@@ -16,7 +15,6 @@ on:
       - "yarn.lock"
       - ".github/workflows/pages.yml"
 
-  # publishAt 到来を拾うための定期デプロイ（毎時）
   schedule:
     - cron: "0 * * * *"
 
@@ -38,51 +36,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (legacy site)
+      - name: Checkout (legacy deploy shell)
         uses: actions/checkout@v4
 
-      # ★ 追加: core を別パスにcheckout
-      - name: Checkout core
+      - name: Checkout core (source of truth)
         uses: actions/checkout@v4
         with:
           repository: ${{ env.CORE_REPO }}
           ref: ${{ env.CORE_REF }}
           path: _core
-          # coreがprivateなら下を有効化（後述）
-          # token: ${{ secrets.CORE_REPO_TOKEN }}
+          # token: ${{ secrets.CORE_REPO_TOKEN }}  # coreがprivateなら有効化
 
-      # ★ 置換: coreのサイト本体をlegacyへ同期（ビルド前）
-      - name: Sync core site into legacy (source of truth = core)
+      - name: Sync core -> legacy workspace (pages/assets/content)
         shell: bash
         run: |
           set -euo pipefail
           echo "== Sync core -> legacy =="
 
-          # 1) pages/layouts/components/styles を同期
-          rm -rf src/pages src/layouts src/components src/styles src/data
+          rm -rf src/pages src/layouts src/components src/styles src/data src/content
           mkdir -p src
 
           cp -a _core/src/pages     src/pages
           cp -a _core/src/layouts   src/layouts
-          cp -a _core/src/components src/components
+          if [ -d "_core/src/components" ]; then cp -a _core/src/components src/components; fi
           if [ -d "_core/src/styles" ]; then cp -a _core/src/styles src/styles; fi
           if [ -d "_core/src/data" ]; then cp -a _core/src/data src/data; fi
 
-          # 2) content も同期（いままで通り）
-          rm -rf src/content
           mkdir -p src/content
           cp -a _core/src/content/. src/content/
 
-          # 3) public も同期（画像/音声）
           rm -rf public
           cp -a _core/public public
 
-          echo "Synced."
+          echo "== core synced =="
 
-
-
-
-      # Pages 推奨: ビルド/デプロイ環境をセット
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -98,7 +85,7 @@ jobs:
 
       - name: Build
         run: npm run build
-        
+
       - name: Debug built HTML (base check)
         run: |
           echo "=== astro.config ==="
@@ -115,6 +102,8 @@ jobs:
         with:
           path: ./dist
 
+
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -127,22 +116,20 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      # ===== SUCCESS NOTIFY =====
       - name: Notify Discord (Success)
         if: success()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           curl -H "Content-Type: application/json" \
-          -d "{\"username\":\"CELESTIAL SYSTEM\",\"content\":\"✅ **DEPLOY SUCCESS**\n🌌 CELESTIAL has been updated.\n🕒 $(date -u)\"}" \
+          -d "{\"username\":\"CELESTIAL SYSTEM\",\"content\":\" **DEPLOY SUCCESS**\n CELESTIAL has been updated.\n $(date -u)\"}" \
           $DISCORD_WEBHOOK
 
-      # ===== FAILURE NOTIFY =====
       - name: Notify Discord (Failure)
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           curl -H "Content-Type: application/json" \
-          -d "{\"username\":\"CELESTIAL SYSTEM\",\"content\":\"❌ **DEPLOY FAILED**\n⚠️ Build or deploy error occurred.\n🕒 $(date -u)\"}" \
+          -d "{\"username\":\"CELESTIAL SYSTEM\",\"content\":\" **DEPLOY FAILED**\n Build or deploy error occurred.\n $(date -u)\"}" \
           $DISCORD_WEBHOOK
