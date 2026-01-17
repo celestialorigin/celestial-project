@@ -52,45 +52,33 @@ jobs:
           # token: ${{ secrets.CORE_REPO_TOKEN }}
 
       # ★ 置換: coreのサイト本体をlegacyへ同期（ビルド前）
-      - name: Sync core into legacy (site + content)
+      - name: Sync core site into legacy (source of truth = core)
         shell: bash
         run: |
           set -euo pipefail
           echo "== Sync core -> legacy =="
 
-          # --- content ---
+          # 1) pages/layouts/components/styles を同期
+          rm -rf src/pages src/layouts src/components src/styles src/data
+          mkdir -p src
+
+          cp -a _core/src/pages     src/pages
+          cp -a _core/src/layouts   src/layouts
+          cp -a _core/src/components src/components
+          if [ -d "_core/src/styles" ]; then cp -a _core/src/styles src/styles; fi
+          if [ -d "_core/src/data" ]; then cp -a _core/src/data src/data; fi
+
+          # 2) content も同期（いままで通り）
+          rm -rf src/content
           mkdir -p src/content
-          rm -rf src/content/*
-          if [ -d "_core/src/content" ]; then
-            cp -a _core/src/content/. src/content/
-          fi
+          cp -a _core/src/content/. src/content/
 
-          # --- site sources (pages/layouts/components/styles) ---
-          mkdir -p src/pages src/layouts src/components src/styles
+          # 3) public も同期（画像/音声）
+          rm -rf public
+          cp -a _core/public public
 
-          rm -rf src/pages/* src/layouts/* src/components/* src/styles/*
-          if [ -d "_core/src/pages" ]; then
-            cp -a _core/src/pages/. src/pages/
-          fi
-          if [ -d "_core/src/layouts" ]; then
-            cp -a _core/src/layouts/. src/layouts/
-          fi
-          if [ -d "_core/src/components" ]; then
-            cp -a _core/src/components/. src/components/
-          fi
-          if [ -d "_core/src/styles" ]; then
-            cp -a _core/src/styles/. src/styles/
-          fi
+          echo "Synced."
 
-          # --- public assets (images/audio) ---
-          mkdir -p public
-          if [ -d "_core/public" ]; then
-            cp -a _core/public/. public/
-          fi
-
-          echo "Synced file counts:"
-          echo "pages: $(find src/pages -type f | wc -l)"
-          echo "content: $(find src/content -type f | wc -l)"
 
 
 
