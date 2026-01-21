@@ -1,4 +1,4 @@
-﻿name: Deploy to GitHub Pages (Scheduled)
+name: Deploy to GitHub Pages (Scheduled)
 
 on:
   workflow_dispatch:
@@ -38,6 +38,9 @@ jobs:
     steps:
       - name: Checkout (legacy deploy shell)
         uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
 
       - name: Checkout core (source of truth)
         uses: actions/checkout@v4
@@ -45,6 +48,8 @@ jobs:
           repository: ${{ env.CORE_REPO }}
           ref: ${{ env.CORE_REF }}
           path: _core
+          lfs: true
+          fetch-depth: 0
           # token: ${{ secrets.CORE_REPO_TOKEN }}  # coreがprivateなら有効化
 
       - name: Sync core -> legacy workspace (pages/assets/content)
@@ -101,8 +106,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
-
-
 
   deploy:
     needs: build
